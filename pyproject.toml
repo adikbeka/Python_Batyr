@@ -5,7 +5,7 @@ description = ""
 authors = ["adikbeka <adletbek9@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "3.9.13"
 fastapi = "^0.78.0"
 pytest = "^7.1.2"
 peewee = "^3.15.0"
