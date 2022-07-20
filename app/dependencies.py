@@ -7,6 +7,7 @@ environment.read_env()
 DB_NAME = environment("DB_NAME")
 DB_URI = environment("DB_URI")
 
+
 def get_db():
 
     db = PostgresqlDatabase(

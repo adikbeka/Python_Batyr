@@ -1,5 +1,5 @@
 from playhouse.migrate import *
-from app.config import get_db
+from app.dependencies import get_db
 
 db = get_db()
 
