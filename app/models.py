@@ -15,7 +15,7 @@ class Good(Model):
 
 class Payment(Model):
     good_id = ForeignKeyField
-    created = TimestampField(verbose_name="Date of the payment")
+    created = DateTimeField(verbose_name="Date of the payment")
     status = CharField(verbose_name="Status of payment")
 
     class Meta:
