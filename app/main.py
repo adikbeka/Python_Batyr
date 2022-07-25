@@ -1,11 +1,13 @@
 from fastapi import FastAPI, Depends, status
-from dependencies import get_db
+from dependencies import get_db, get_queue
 from schemas import GoodResponseSchema, GoodRequestSchema, GoodOptionalRequestSchema, PaymentRequestSchema, PaymentResponseSchema, PaymentOptionalRequestSchema
 from models import Good, Payment
 from typing import List
+from tasks import hello_world
 import datetime
 
 app = FastAPI(dependencies=[Depends(get_db)])
+
 
 # Creating items
 @app.post("/goods", response_model= GoodResponseSchema)
@@ -135,3 +137,14 @@ def delete_payment(payment_id: int):
     payment.delete_instance()
 
     return  {}
+
+
+@app.post("/run-task")
+def run_task():
+    """
+    Running task
+    """
+    queue = get_queue()
+    queue.enqueue(hello_world)
+
+    return {}

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, validator, Field
 from typing import Optional
-import datetime
+from datetime import datetime
 
 
 class GoodRequestSchema(BaseModel):
@@ -15,6 +15,7 @@ class GoodResponseSchema(GoodRequestSchema):
     class Config:
         orm_mode = True
 
+
 class GoodOptionalRequestSchema(BaseModel):
     name: Optional[str]
     price: Optional[int]
@@ -22,16 +23,19 @@ class GoodOptionalRequestSchema(BaseModel):
 
 ###########################
 
+
 class PaymentRequestSchema(BaseModel):
     good_id: int
     created: datetime
     status: str
+
 
 class PaymentResponseSchema(PaymentRequestSchema):
     id: int
 
     class Config:
         orm_mode = True
+
 
 class PaymentOptionalRequestSchema(BaseModel):
     good_id: Optional[int]
