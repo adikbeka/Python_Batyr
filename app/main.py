@@ -3,6 +3,7 @@ from dependencies import get_db
 from schemas import GoodResponseSchema, GoodRequestSchema, GoodOptionalRequestSchema, PaymentRequestSchema, PaymentResponseSchema, PaymentOptionalRequestSchema
 from models import Good, Payment
 from typing import List
+import datetime
 
 app = FastAPI(dependencies=[Depends(get_db)])
 
@@ -90,7 +91,7 @@ def get_all_payments():
 def create_payment(payment_schema: PaymentRequestSchema) -> dict:
     payment = Payment.create(
         good_id = payment_schema.good_id,
-        created = payment_schema.created,
+        created = datetime.created,
         status = payment_schema.status
     )
 
