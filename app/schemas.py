@@ -2,7 +2,6 @@ from pydantic import BaseModel, validator, Field
 from typing import Optional
 import datetime
 
-MAX_PRICE = 10
 
 class GoodRequestSchema(BaseModel):
     name: str
