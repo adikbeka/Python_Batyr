@@ -4,9 +4,11 @@ from schemas import GoodResponseSchema, GoodRequestSchema, GoodOptionalRequestSc
 from models import Good, Payment
 from typing import List
 from tasks import hello_world
-import datetime
+from datetime import datetime, timedelta
+from scheduler import create_scheduler
 
-app = FastAPI(dependencies=[Depends(get_db)])
+app = FastAPI(dependencies=[Depends(get_db)],
+              on_startup=[create_scheduler])
 
 
 # Creating items
@@ -79,22 +81,25 @@ def delete_good(good_id: int):
 ##################################################################
 #Payment
 
-@app.get("/payments", response_model=List[PaymentResponseSchema])
-def get_all_payments():
-    payment_list = Payment.select()
+@app.get("/payments/{days}", response_model=List[PaymentResponseSchema])
+def get_all_payments(days:int):
+    range = datetime.now() - timedelta(7)
+    payment_list = Payment.select().where(Payment.status >= range)
+
 
     response = [PaymentResponseSchema.from_orm(item) for item in payment_list]
 
     return response
 
 
-# Creating items
+# Creating payment
 @app.post("/payments", response_model= PaymentResponseSchema)
 def create_payment(payment_schema: PaymentRequestSchema) -> dict:
     payment = Payment.create(
         good_id = payment_schema.good_id,
-        created = datetime.created,
-        status = payment_schema.status
+        created = datetime.now(),
+        status = payment_schema.status,
+        is_issed = payment_schema.is_issued
     )
 
     response = PaymentResponseSchema.from_orm(payment)
@@ -102,15 +107,8 @@ def create_payment(payment_schema: PaymentRequestSchema) -> dict:
     return response.dict()
 
 
-# Getting index of item
-@app.get("/payments/{payment_id}")
-def get_payment(payment_id: int) -> dict:
-    payment = Payment.get_by_id(payment_id)
-
-    response = PaymentResponseSchema.from_orm(payment)
-
-    return response.dict()
-
+# @app.post("/approve-payment/{payment_id}")
+# def approve_payment(payment_id:int, )
 
 # Updating items
 @app.patch("/payments/{payment_id}", response_model=PaymentResponseSchema)
@@ -126,17 +124,6 @@ def update_payment(payment_id: int, payment_body: PaymentOptionalRequestSchema):
     response = PaymentResponseSchema.from_orm(payment)
 
     return response
-
-
-# Deleting the item
-@app.delete("/payments/{payment_id}", status_code=status.HTTP_200_OK)
-def delete_payment(payment_id: int):
-
-    payment = Payment.get_by_id(payment_id)
-
-    payment.delete_instance()
-
-    return  {}
 
 
 @app.post("/run-task")
