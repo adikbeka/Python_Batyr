@@ -36,7 +36,7 @@ class PaymentRequestSchema(BaseModel):
     @validator("good_id")
     def price_check(cls, v:int):
         good_price = Good.get_by_id(v)
-        if good_price > MAX_PRICE:
+        if good_price.price > MAX_PRICE:
             raise ValueError("The price of the good is more than 100")
         return v
 
