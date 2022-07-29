@@ -3,17 +3,24 @@ from dependencies import get_db, get_queue
 from schemas import GoodResponseSchema, GoodRequestSchema, GoodOptionalRequestSchema, PaymentRequestSchema, PaymentResponseSchema, PaymentOptionalRequestSchema
 from models import Good, Payment
 from typing import List
-from tasks import hello_world
+from tasks import issued_item, check_payment
 from datetime import datetime, timedelta
 from scheduler import create_scheduler
+
+queue = get_queue()
 
 app = FastAPI(dependencies=[Depends(get_db)],
               on_startup=[create_scheduler])
 
 
-# Creating items
 @app.post("/goods", response_model= GoodResponseSchema)
 def create_good(good_schema: GoodRequestSchema) -> dict:
+
+    """
+    Creating items
+
+    """
+
     good = Good.create(
         name = good_schema.name,
         price = good_schema.price,
@@ -25,9 +32,13 @@ def create_good(good_schema: GoodRequestSchema) -> dict:
     return response.dict()
 
 
-# Getting index of item
 @app.get("/goods/{good_id}")
 def get_good(good_id: int) -> dict:
+    """
+    Getting index of item
+
+    """
+
     good = Good.get_by_id(good_id)
 
     response = GoodResponseSchema.from_orm(good)
@@ -35,15 +46,22 @@ def get_good(good_id: int) -> dict:
     return response.dict()
 
 
-# Test
 @app.get("/health")
 def health() -> dict:
+    """
+    Health check
+
+    """
     return {"status": "ok"}
 
 
-# Get all items
 @app.get("/goods", response_model=List[GoodResponseSchema])
 def get_all_goods():
+    """
+    Get all items
+
+    """
+
     good_list = Good.select()
 
     response = [GoodResponseSchema.from_orm(item) for item in good_list]
@@ -51,9 +69,12 @@ def get_all_goods():
     return response
 
 
-# Updating items
 @app.patch("/goods/{good_id}", response_model=GoodResponseSchema)
 def update_good(good_id: int, good_body: GoodOptionalRequestSchema):
+    """
+    Updating items
+
+    """
 
     good = Good.get_by_id(good_id)
 
@@ -70,6 +91,10 @@ def update_good(good_id: int, good_body: GoodOptionalRequestSchema):
 # Deleting the item
 @app.delete("/goods/{good_id}", status_code=status.HTTP_200_OK)
 def delete_good(good_id: int):
+    """
+    Deleting the item
+
+    """
 
     good = Good.get_by_id(good_id)
 
@@ -83,6 +108,11 @@ def delete_good(good_id: int):
 
 @app.get("/payments/{days}", response_model=List[PaymentResponseSchema])
 def get_all_payments(days:int):
+    """
+    Get all payments
+
+    """
+
     range = datetime.now() - timedelta(7)
     payment_list = Payment.select().where(Payment.status >= range)
 
@@ -92,14 +122,18 @@ def get_all_payments(days:int):
     return response
 
 
-# Creating payment
-@app.post("/payments", response_model= PaymentResponseSchema)
+@app.post("/create-payment", response_model= PaymentResponseSchema)
 def create_payment(payment_schema: PaymentRequestSchema) -> dict:
+    """
+    Creating payment
+
+    """
+
     payment = Payment.create(
         good_id = payment_schema.good_id,
         created = datetime.now(),
         status = payment_schema.status,
-        is_issed = payment_schema.is_issued
+        is_issued = payment_schema.is_issued
     )
 
     response = PaymentResponseSchema.from_orm(payment)
@@ -107,12 +141,26 @@ def create_payment(payment_schema: PaymentRequestSchema) -> dict:
     return response.dict()
 
 
-# @app.post("/approve-payment/{payment_id}")
-# def approve_payment(payment_id:int, )
+@app.post("/approve-payment/{payment_id}")
+def approve_payment(payment_id:int):
+    """
+    Approve payment
 
-# Updating items
+    """
+
+    paid_payment = Payment.get_by_id("payment_id")
+    paid_payment.status = "paid"
+    paid_payment.save()
+
+    job = queue.enqueue(issued_item, payment_id)
+
+
 @app.patch("/payments/{payment_id}", response_model=PaymentResponseSchema)
 def update_payment(payment_id: int, payment_body: PaymentOptionalRequestSchema):
+    """
+    Updating items
+
+    """
 
     payment = Payment.get_by_id(payment_id)
 
@@ -126,12 +174,12 @@ def update_payment(payment_id: int, payment_body: PaymentOptionalRequestSchema):
     return response
 
 
-@app.post("/run-task")
-def run_task():
+@app.post("/check-payment-list")
+def check_payment_list():
     """
     Running task
     """
     queue = get_queue()
-    queue.enqueue(hello_world)
+    queue.enqueue(check_payment)
 
     return {}
