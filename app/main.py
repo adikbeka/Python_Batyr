@@ -132,8 +132,8 @@ def create_payment(payment_schema: PaymentRequestSchema) -> dict:
     payment = Payment.create(
         good_id = payment_schema.good_id,
         created = datetime.now(),
-        status = payment_schema.status,
-        is_issued = payment_schema.is_issued
+        status = "new",
+        is_issued = False
     )
 
     response = PaymentResponseSchema.from_orm(payment)
